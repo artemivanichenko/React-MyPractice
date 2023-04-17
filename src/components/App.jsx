@@ -1,59 +1,56 @@
-import { data } from '../data/users';
-// import { User } from '../components/user/User';
-import { UserList } from './user-list/UserList';
-import { Section } from './Section/Section';
+// import { Button } from './Button/Button';
 import { Component } from 'react';
-import { Button } from './Button/Button';
-import { AddUserForm } from './AddUserForm/AddUserForm';
-import { nanoid } from 'nanoid';
-
+import movies from '../data/movies.json';
+import { Modal } from './Modal/Modal';
+import { MoviesGallery } from './MoviesGallery/MoviesGallery';
+const MOVIES_KEY = 'movies';
 export class App extends Component {
   state = {
-    isListShown: false,
-    users: data,
-    isFormShown: false,
-  };
-  showList = () => {
-    this.setState({ isListShown: true });
-  };
-  deleteUser = id => {
-    this.setState(prevState => {
-      return { users: prevState.users.filter(user => user.id !== id) };
-    });
-  };
-  showForm = () => {
-    this.setState({ isFormShown: true });
-  };
-  addUser = data => {
-    const newUser = { id: nanoid(), ...data };
-    this.setState(prevState => {
-      return { users: [...prevState.users, newUser] };
-    });
+    movies: movies,
+    currentPoster: null,
   };
 
-  closeForm = () => {
-    this.setState({ isFormShown: false });
+  componentDidMount() {
+    const data = localStorage.getItem(MOVIES_KEY);
+    console.log(data);
+    if (data !== null) {
+      this.setState({ movies: JSON.parse(data) });
+    }
+  }
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.movies !== prevState.movies) {
+      localStorage.setItem(MOVIES_KEY, JSON.stringify(this.state.movies));
+    }
+  }
+  //  componentWillUnmount()
+  handleDelete = id => {
+    this.setState(prevState => {
+      return {
+        movies: prevState.movies.filter(movie => movie.id !== id),
+      };
+    });
   };
-
+  openModal = data => {
+    this.setState({ currentPoster: data });
+  };
+  closeModal = () => {
+    this.setState({ currentPoster: null });
+  };
   render() {
-    const { isListShown, users, isFormShown } = this.state;
-
+    const { movies } = this.state;
     return (
       <>
-        <Section title="List Of Users">
-          {!isListShown ? (
-            <Button text="Show list of users" clickHandler={this.showList} />
-          ) : (
-            <>
-              <UserList users={users} deleteUser={this.deleteUser} />
-              {isFormShown ? (
-                <AddUserForm addUser={this.addUser} closeForm={this.closeForm}/>
-              ) : (
-                <Button text="Add user" clickHandler={this.showForm} />
-              )}
-            </>
-          )}
-        </Section>
+        <MoviesGallery
+          movies={movies}
+          onDelete={this.handleDelete}
+          openModal={this.openModal}
+        />
+        {this.state.currentPoster && (
+          <Modal
+            closeModal={this.closeModal}
+            poster={this.state.currentPoster}
+          />
+        )}
       </>
     );
   }
